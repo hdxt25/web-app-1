@@ -24,23 +24,8 @@ pipeline {
         }*/
         stage("Trivy: Filesystem scan"){
             steps{
-                sh '''
-                    # Install dependencies and Trivy in one go
-                    apt-get update -y && \
-                    apt-get install -y wget apt-transport-https gnupg lsb-release && \
+                sh  'trivy fs .'
                 
-                    # Add Trivy repo
-                    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor -o /usr/share/keyrings/trivy.gpg
-                    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" \
-                        | tee /etc/apt/sources.list.d/trivy.list
-
-                    # Update package index once more to include Trivy repo and install Trivy
-                    apt-get update -y && apt-get install -y trivy
-
-                    trivy fs .
-                
-                
-                '''
             } 
         }
         stage("build & test") {
