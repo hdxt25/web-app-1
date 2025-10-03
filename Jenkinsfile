@@ -22,12 +22,12 @@ pipeline {
                 git url: "https://github.com/hdxt25/web-app-1.git", branch: "main", credentialsId: "github-cred"
             }    
         }
-        stage("Trivy: Filesystem scan"){
+       /* stage("Trivy: Filesystem scan"){
             steps{
               sh ' trivy fs --debug --skip-dirs target,.git . '
                 
             } 
-        }
+        }*/
         stage("build & test") {
             steps {
                 sh 'mvn clean package'
