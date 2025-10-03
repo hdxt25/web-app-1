@@ -25,7 +25,7 @@ pipeline {
         }
         stage('static code analysis') {
             environment {
-                SONAR_URL = "http://3.144.131.253:9000"
+                SONAR_URL = "http://3.134.96.43:9000"
             }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
@@ -104,31 +104,37 @@ pipeline {
                 }
             }
         }
+        
         stage('Update Deployment File') {
             environment {
-                GIT_REPO_NAME = "spring-boot-app"
-                GIT_USER_NAME = "hdxt25"
+                GIT_REPO_NAME = "web-app-1"
+                    
             }
-            steps {
-                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                    sh """
-                        # Configure Git
-                        git config user.email "hdxt25@gmail.com"
-                        git config user.name "Himanshu"
-                        git config --global --add safe.directory $WORKSPACE
+            steps {    
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'github-cred', 
+                                          usernameVariable: 'GIT_USER', 
+                                          passwordVariable: 'GIT_PASS')]) {
+                        sh """
+                            # Configure Git identity
+                            git config user.email "hdxt25@gmail.com"
+                            git config user.name "himanshu"
+                            git config --global --add safe.directory $WORKSPACE
 
-                        # Update deployment manifest with current build number
-                        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+                            # Update deployment manifest with Jenkins BUILD_NUMBER
+                            sed -i "s/replaceImageTag/${GIT_COMMIT}/g" web-app-manifests/deployment.yml
 
-                        # Commit & push changes
-                        git add spring-boot-app-manifests/deployment.yml
-                        git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
-                
-                        # Push to private GitHub repo using token authentication
-                        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
-                    """
-                }    
+                            # Stage and commit changes
+                            git add web-app-manifests/deployment.yml
+                            git commit -m "Update deployment image to version ${GIT_COMMIT}" || echo "No changes to commit"
+
+                            # Push changes using username/password from Jenkins credentials
+                            git push https://${GIT_USER}:${GIT_PASS}@github.com/${GIT_USER}/${GIT_REPO_NAME}.git HEAD:main
+                        """
+                    }
+                }
             }
+
         }
     }
 }
