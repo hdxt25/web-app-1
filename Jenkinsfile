@@ -26,8 +26,8 @@ pipeline {
             steps{
               sh ' trivy fs --debug --skip-dirs target,.git . '
                 
-            } */
-        
+            } 
+        }*/
         stage("build & test") {
             steps {
                 sh 'mvn clean package'
