@@ -8,7 +8,7 @@ pipeline {
     }
     environment {
         SONAR_URL = "http://3.134.96.43:9000"
-        DOCKER_IMAGE = "hdxt25/web-app-1:${GIT_COMMIT}"
+        DOCKER_IMAGE = "hdxt25/web-app-1"
     }
 
     stages {
@@ -36,21 +36,21 @@ pipeline {
         }
         stage('Docker Build (Local Only)') {
             steps {
-                sh """
+                sh '''
                     docker buildx create --name mybuilder --use || true
                     docker buildx inspect --bootstrap
 
                     # Build single arch and load locally for scanning
                     docker buildx build \
                     --platform linux/amd64 \
-                    -t ${DOCKER_IMAGE}:${GIT_COMMIT} \
-                    --load .
-                """
+                    -t $DOCKER_IMAGE:$GIT_COMMIT --load .
+                    
+                '''
             }
         }
         stage('Run Trivy vulnerability scanner') {
             steps {
-                sh """
+                sh '''
                 
                     # Install dependencies and Trivy in one go
                     apt-get update -y && \
@@ -66,18 +66,17 @@ pipeline {
 
                     # Run Trivy scan on the staging Docker image
                     trivy image \
-                        --exit-code 1 --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${GIT_COMMIT}
+                        --exit-code 1 --severity HIGH,CRITICAL $DOCKER_IMAGE:$GIT_COMMIT
                          
-                """
+                '''
             }
         }
         stage('build & push final docker image') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId:'docker-cred',
+                withCredentials([usernamePassword(credentialsId:'docker-cred',
                                                         usernameVariable: DOCKER_USER,
                                                         passwordVariable: DOCKER_PASS)]) {
-                        sh """
+                        sh '''
                             
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
@@ -88,16 +87,16 @@ pipeline {
                             # Build and push multi-arch image
                             docker buildx build \
                                 --platform linux/amd64,linux/arm64,linux/arm/v7 \
-                                -t ${DOCKER_IMAGE}:${GIT_COMMIT} --push .
+                                -t $DOCKER_IMAGE:$GIT_COMMIT --push .
                             
                             docker logout
                                 
                                 
 
                             
-                        """
-                    }                                   
-                }
+                        '''
+                }                                   
+                
             }
         }
         
@@ -111,22 +110,22 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'github-cred', 
                                           usernameVariable: 'GIT_USER', 
                                           passwordVariable: 'GIT_PASS')]) {
-                        sh """
+                        sh '''
                             # Configure Git identity
                             git config user.email "hdxt25@gmail.com"
                             git config user.name "himanshu"
                             git config --global --add safe.directory $WORKSPACE
 
                             # Update deployment manifest with Jenkins BUILD_NUMBER
-                            sed -i "s/replaceImageTag/${GIT_COMMIT}/g" web-app-manifests/deployment.yml
+                            sed -i "s/replaceImageTag/$GIT_COMMIT/g" web-app-manifests/deployment.yml
 
                             # Stage and commit changes
                             git add web-app-manifests/deployment.yml
                             git commit -m "Update deployment image to version ${GIT_COMMIT}" || echo "No changes to commit"
 
                             # Push changes using username/password from Jenkins credentials
-                            git push https://${GIT_USER}:${GIT_PASS}@github.com/${GIT_USER}/${GIT_REPO_NAME}.git HEAD:main
-                        """
+                            git push https://$GIT_USER:$GIT_PASS@github.com/$GIT_USER/$GIT_REPO_NAME.git HEAD:main
+                        '''
                     }
                 }
             }
