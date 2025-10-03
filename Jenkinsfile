@@ -2,7 +2,7 @@ pipeline {
 
     agent { 
         docker {
-            image 'hdxt25/agent:v1'
+            image 'hdxt25/maven-docker-agent:v1'
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
