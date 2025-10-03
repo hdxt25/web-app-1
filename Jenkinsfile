@@ -12,6 +12,21 @@ pipeline {
     }
 
     stages {
+        stage("Workspace cleanup"){
+            steps{
+                cleanWs()
+            }
+        }
+        stage('Git: Code Checkout') {
+            steps {
+                git url: "https://github.com/hdxt25/web-app-1.git", branch: "main"
+            }
+        }
+        stage("Trivy: Filesystem scan"){
+            steps{
+                sh "trivy fs ."
+            } 
+        }
         stage("build & test") {
             steps {
                 sh 'mvn clean install'
