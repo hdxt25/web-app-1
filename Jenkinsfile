@@ -24,7 +24,7 @@ pipeline {
         }
         stage("Trivy: Filesystem scan"){
             steps{
-                sh  'trivy fs .'
+                sh  'trivy fs --cache-dir /tmp/trivy-cache --skip-dirs target,.git --quiet .'
                 
             } 
         }
