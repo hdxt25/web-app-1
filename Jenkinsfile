@@ -6,6 +6,10 @@ pipeline {
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
+    environment {
+        SONAR_URL = "http://3.134.96.43:9000"
+        DOCKER_IMAGE = "hdxt25/web-app-1:${GIT_COMMIT}"
+    }
 
     stages {
         stage("build & test") {
@@ -15,7 +19,7 @@ pipeline {
         }
         stage('Dependency-Check') {
             steps {
-                sh 'mvn org.owasp:dependency-check-maven:check -DskipTests'
+                sh 'mvn org.owasp:dependency-check-maven:check'
             }
             post {
                 always {
@@ -24,12 +28,9 @@ pipeline {
             }
         }
         stage('static code analysis') {
-            environment {
-                SONAR_URL = "http://3.134.96.43:9000"
-            }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_LOGIN -Dsonar.host.url=$SONAR_URL'
+                    sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=$SONAR_URL'
                 }
             }
         }
@@ -65,22 +66,17 @@ pipeline {
 
                     # Run Trivy scan on the staging Docker image
                     trivy image \
-                        --exit-code 1 \
-                        --severity HIGH,CRITICAL \
-                        ${DOCKER_IMAGE}:${GIT_COMMIT}-scan
-            
+                        --exit-code 1 --severity HIGH,CRITICAL ${DOCKER_IMAGE}:${GIT_COMMIT}
+                         
                 """
             }
         }
-        stage(build & push final docker image) {
-            environment {
-                DOCKER_IMAGE = "hdxt25/web-app-1:${GIT_COMMIT}"
-            }
+        stage('build & push final docker image') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId:'docker-cred',
-                                                        usernameVariable: $DOCKER_USER,
-                                                        passwordVariable: $DOCKER_PASS)]) {
+                                                        usernameVariable: DOCKER_USER,
+                                                        passwordVariable: DOCKER_PASS)]) {
                         sh """
                             
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
