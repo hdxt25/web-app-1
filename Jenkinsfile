@@ -17,11 +17,11 @@ pipeline {
                 cleanWs()
             }
         }
-    /*    stage('Git: Code Checkout') {
+        stage('Git: Code Checkout') {
             steps {
                 git url: "https://github.com/hdxt25/web-app-1.git", branch: "main", credentialsId: "github-cred"
             }    
-        }*/
+        }
         stage("Trivy: Filesystem scan"){
             steps{
                 sh  'trivy fs .'
