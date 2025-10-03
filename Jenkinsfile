@@ -2,7 +2,7 @@ pipeline {
 
     agent { 
         docker {
-            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            image 'hdxt25/maven-docker-agent:v1'
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/jenkins/workspace:/workspace -w /workspace'
         }
     }
@@ -22,12 +22,12 @@ pipeline {
                 git url: "https://github.com/hdxt25/web-app-1.git", branch: "main", credentialsId: "github-cred"
             }    
         }
-        /*stage("Trivy: Filesystem scan"){
+        stage("Trivy: Filesystem scan"){
             steps{
               sh ' trivy fs --debug --skip-dirs target,.git . '
                 
             } 
-        }*/
+        }
         stage("build & test") {
             steps {
                 sh 'mvn clean package'
@@ -43,13 +43,13 @@ pipeline {
                 }
             }
         }
-        stage('static code analysis') {
+       /* stage('static code analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
                     sh 'mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=$SONAR_URL'
                 }
             }
-        }
+        }*/
         stage('Docker Build (Local Only)') {
             steps {
                 sh '''
