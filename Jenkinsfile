@@ -7,7 +7,7 @@ pipeline {
         }
     }
     environment {
-        SONAR_URL = "http://3.134.96.43:9000"
+        SONAR_URL = "http://3.134.76.152:9000"
         DOCKER_IMAGE = "hdxt25/web-app-1"
     }
 
