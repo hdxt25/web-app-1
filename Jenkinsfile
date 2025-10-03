@@ -1,6 +1,6 @@
 pipeline {
 
-    agent {
+    agent { 
         docker {
             image 'hdxt25/agent:v1'
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
